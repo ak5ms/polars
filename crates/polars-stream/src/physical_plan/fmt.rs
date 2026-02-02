@@ -730,6 +730,8 @@ fn visualize_plan_rec(
         PhysNodeKind::EwmVar { input, options: _ } => ("ewm-var".to_string(), &[*input][..]),
         #[cfg(feature = "ewma")]
         PhysNodeKind::EwmStd { input, options: _ } => ("ewm-std".to_string(), &[*input][..]),
+        #[cfg(feature = "ewma")]
+        PhysNodeKind::EwmLasso { input, options: _ } => ("ewm-lasso".to_string(), &[*input][..]),
     };
 
     let node_id = node_key.data().as_ffi();

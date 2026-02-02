@@ -865,6 +865,17 @@ impl PyExpr {
         };
         self.inner.clone().ewm_var(options).into()
     }
+
+    #[pyo3(signature = (y, decay=0.9, alpha=1.0, max_iter=1000, tol=1e-8))]
+    fn ewm_lasso(&self, y: PyExpr, decay: f64, alpha: f64, max_iter: usize, tol: f64) -> Self {
+        let options = EwmLassoOptions {
+            decay,
+            alpha,
+            max_iter,
+            tol,
+        };
+        self.inner.clone().ewm_lasso(y.inner, options).into()
+    }
     fn extend_constant(&self, value: PyExpr, n: PyExpr) -> Self {
         self.inner
             .clone()

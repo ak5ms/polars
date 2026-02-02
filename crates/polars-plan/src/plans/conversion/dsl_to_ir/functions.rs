@@ -1029,6 +1029,8 @@ pub(super) fn convert_functions(
         F::EwmStd { options } => I::EwmStd { options },
         #[cfg(feature = "ewma")]
         F::EwmVar { options } => I::EwmVar { options },
+        #[cfg(feature = "ewma")]
+        F::EwmLasso { options } => I::EwmLasso { options },
         #[cfg(feature = "replace")]
         F::Replace => I::Replace,
         #[cfg(feature = "replace")]

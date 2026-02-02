@@ -901,6 +901,23 @@ pub(super) fn ewm_var(s: &Column, options: polars_ops::series::EWMOptions) -> Po
     polars_ops::prelude::ewm_var(s.as_materialized_series(), options).map(Column::from)
 }
 
+#[cfg(feature = "ewma")]
+pub(super) fn ewm_lasso(
+    inputs: &[Column],
+    options: polars_ops::series::EwmLassoOptions,
+) -> PolarsResult<Column> {
+    polars_ensure!(
+        inputs.len() == 2,
+        ComputeError: "ewm_lasso requires two inputs"
+    );
+    polars_ops::prelude::ewm_lasso(
+        inputs[0].as_materialized_series(),
+        inputs[1].as_materialized_series(),
+        options,
+    )
+    .map(Column::from)
+}
+
 #[cfg(feature = "ewma_by")]
 pub(super) fn ewm_mean_by(s: &[Column], half_life: polars_time::Duration) -> PolarsResult<Column> {
     use polars_ops::series::SeriesMethods;

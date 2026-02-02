@@ -10488,6 +10488,56 @@ Consider using {self}.implode() instead"""
             self._pyexpr.ewm_var(alpha, adjust, bias, min_samples, ignore_nulls)
         )
 
+    def ewm_lasso(
+        self,
+        y: IntoExpr,
+        *,
+        decay: float = 0.9,
+        alpha: float = 1.0,
+        max_iter: int = 1000,
+        tol: float = 1e-8,
+    ) -> Expr:
+        """
+        Compute streaming exponentially-weighted LASSO coefficients per row.
+
+        Parameters
+        ----------
+        y
+            Target expression.
+        decay
+            Exponential decay factor applied to historical weights.
+        alpha
+            L1 penalty strength.
+        max_iter
+            Maximum coordinate descent iterations per row.
+        tol
+            Convergence tolerance for coordinate descent updates.
+
+        Examples
+        --------
+        >>> df = pl.DataFrame(
+        ...     {
+        ...         "x": [[1.0, 2.0], [2.0, 1.0], [3.0, 0.0]],
+        ...         "y": [1.0, 2.0, 1.5],
+        ...     }
+        ... )
+        >>> df.select(pl.col("x").ewm_lasso(pl.col("y")))
+        shape: (3, 1)
+        ┌───────────┐
+        │ x         │
+        │ ---       │
+        │ list[f64] │
+        ╞═══════════╡
+        │ [...]     │
+        │ [...]     │
+        │ [...]     │
+        └───────────┘
+        """
+        y_expr = parse_into_expression(y)
+        return wrap_expr(
+            self._pyexpr.ewm_lasso(y_expr, decay, alpha, max_iter, tol)
+        )
+
     def extend_constant(self, value: IntoExpr, n: int | IntoExprColumn) -> Expr:
         """
         Extremely fast method for extending the Series with 'n' copies of a value.

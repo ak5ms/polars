@@ -1500,6 +1500,12 @@ impl Expr {
         self.map_unary(FunctionExpr::EwmVar { options })
     }
 
+    #[cfg(feature = "ewma")]
+    /// Streaming exponentially-weighted lasso coefficients per row.
+    pub fn ewm_lasso(self, y: Expr, options: EwmLassoOptions) -> Self {
+        self.map_binary(FunctionExpr::EwmLasso { options }, y)
+    }
+
     /// Returns whether any of the values in the column are `true`.
     ///
     /// If `ignore_nulls` is `False`, [Kleene logic] is used to deal with nulls:

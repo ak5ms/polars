@@ -9,6 +9,9 @@ use crate::execute::StreamingExecutionState;
 use crate::graph::PortState;
 use crate::pipe::{RecvPort, SendPort};
 
+/// Streaming execution node for EWM operations.
+///
+/// The node owns the boxed state object so state is preserved across morsels.
 pub struct EwmNode {
     name: &'static str,
     state: Box<dyn EwmStateUpdate + Send>,

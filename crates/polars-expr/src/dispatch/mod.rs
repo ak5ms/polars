@@ -503,6 +503,8 @@ pub fn function_expr_to_udf(func: IRFunctionExpr) -> SpecialEq<Arc<dyn ColumnsUd
         F::EwmStd { options } => map!(misc::ewm_std, options),
         #[cfg(feature = "ewma")]
         F::EwmVar { options } => map!(misc::ewm_var, options),
+        #[cfg(feature = "ewma")]
+        F::EwmLasso { options } => map_as_slice!(misc::ewm_lasso, options),
         #[cfg(feature = "replace")]
         F::Replace => {
             map_as_slice!(misc::replace)

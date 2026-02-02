@@ -414,6 +414,12 @@ pub enum PhysNodeKind {
         input: PhysStream,
         options: polars_ops::series::EWMOptions,
     },
+
+    #[cfg(feature = "ewma")]
+    EwmLasso {
+        input: PhysStream,
+        options: polars_ops::series::EwmLassoOptions,
+    },
 }
 
 fn visit_node_inputs_mut(
@@ -587,7 +593,8 @@ fn visit_node_inputs_mut(
             #[cfg(feature = "ewma")]
             PhysNodeKind::EwmMean { input, options: _ }
             | PhysNodeKind::EwmVar { input, options: _ }
-            | PhysNodeKind::EwmStd { input, options: _ } => {
+            | PhysNodeKind::EwmStd { input, options: _ }
+            | PhysNodeKind::EwmLasso { input, options: _ } => {
                 rec!(input.node);
                 visit(input)
             },

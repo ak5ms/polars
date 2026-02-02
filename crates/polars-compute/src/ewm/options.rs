@@ -15,6 +15,37 @@ pub struct EWMOptions {
     pub ignore_nulls: bool,
 }
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
+#[cfg_attr(feature = "dsl-schema", derive(schemars::JsonSchema))]
+#[derive(Debug, Copy, Clone, PartialEq)]
+#[must_use]
+pub struct EwmLassoOptions {
+    pub decay: f64,
+    pub alpha: f64,
+    pub max_iter: usize,
+    pub tol: f64,
+}
+
+impl Default for EwmLassoOptions {
+    fn default() -> Self {
+        Self {
+            decay: 0.9,
+            alpha: 1.0,
+            max_iter: 1000,
+            tol: 1e-8,
+        }
+    }
+}
+
+impl Hash for EwmLassoOptions {
+    fn hash<H: Hasher>(&self, state: &mut H) {
+        self.decay.to_bits().hash(state);
+        self.alpha.to_bits().hash(state);
+        self.max_iter.hash(state);
+        self.tol.to_bits().hash(state);
+    }
+}
+
 impl Default for EWMOptions {
     fn default() -> Self {
         Self {
