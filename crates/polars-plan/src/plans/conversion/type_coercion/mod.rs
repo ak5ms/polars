@@ -113,8 +113,8 @@ impl OptimizationRule for TypeCoercionRule {
         schema: &Schema,
         ctx: OptimizeExprContext,
     ) -> PolarsResult<Option<AExpr>> {
-        let expr = expr_arena.get(expr_node);
-        let out = match *expr {
+        let expr = expr_arena.get(expr_node).clone();
+        let out = match expr {
             ref ae @ AExpr::Cast { .. } => {
                 let AExpr::Cast {
                     expr: input_expr,
@@ -485,6 +485,70 @@ impl OptimizationRule for TypeCoercionRule {
                 Some(AExpr::Function {
                     function: new_function,
                     input: vec![input_expr],
+                    options,
+                })
+            },
+            #[cfg(feature = "ewma")]
+            AExpr::Function {
+                function: IRFunctionExpr::EwmLasso { options: ewm_options },
+                ref input,
+                options,
+            } => {
+                polars_ensure!(
+                    (0.0..=1.0).contains(&ewm_options.decay),
+                    ComputeError: "decay must be in [0; 1]"
+                );
+                polars_ensure!(
+                    ewm_options.max_iter > 0,
+                    ComputeError: "max_iter must be greater than 0"
+                );
+                polars_ensure!(
+                    ewm_options.tol > 0.0,
+                    ComputeError: "tol must be greater than 0"
+                );
+
+                let input_exprs = match &input.as_slice() {
+                    &[x_expr, y_expr] => (x_expr, y_expr),
+                    v => polars_bail!(
+                        ComputeError:
+                        "ewm_lasso requires 2 inputs, got {} (input: {:?})",
+                        v.len(),
+                        v
+                    ),
+                };
+
+                let (_, x_dtype) =
+                    get_aexpr_and_type(expr_arena, input_exprs.0.node(), schema).unwrap();
+                let (_, y_dtype) =
+                    get_aexpr_and_type(expr_arena, input_exprs.1.node(), schema).unwrap();
+
+                let mut new_inputs = input.clone();
+                if x_dtype != DataType::List(Box::new(DataType::Float64)) {
+                    let cast_expr = ExprIR::from_node(
+                        expr_arena.add(AExpr::Cast {
+                            expr: input_exprs.0.node(),
+                            dtype: DataType::List(Box::new(DataType::Float64)),
+                            options: CastOptions::NonStrict,
+                        }),
+                        expr_arena,
+                    );
+                    new_inputs[0] = cast_expr;
+                }
+                if !y_dtype.is_float() {
+                    let cast_expr = ExprIR::from_node(
+                        expr_arena.add(AExpr::Cast {
+                            expr: input_exprs.1.node(),
+                            dtype: DataType::Float64,
+                            options: CastOptions::NonStrict,
+                        }),
+                        expr_arena,
+                    );
+                    new_inputs[1] = cast_expr;
+                }
+
+                Some(AExpr::Function {
+                    function: IRFunctionExpr::EwmLasso { options: ewm_options },
+                    input: new_inputs,
                     options,
                 })
             },

@@ -425,6 +425,8 @@ impl IRFunctionExpr {
             EwmStd { .. } => mapper.map_numeric_to_float_dtype(true),
             #[cfg(feature = "ewma")]
             EwmVar { .. } => mapper.var_dtype(),
+            #[cfg(feature = "ewma")]
+            EwmLasso { .. } => mapper.with_dtype(DataType::List(Box::new(DataType::Float64))),
             #[cfg(feature = "replace")]
             Replace => mapper.with_same_dtype(),
             #[cfg(feature = "replace")]

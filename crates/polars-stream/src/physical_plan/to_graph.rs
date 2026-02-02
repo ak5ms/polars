@@ -1450,6 +1450,19 @@ fn to_graph_rec<'a>(
 
             ctx.graph.add_node(node, [(input_key, input.port)])
         },
+
+        #[cfg(feature = "ewma")]
+        EwmLasso { input, options } => {
+            use nodes::ewm_lasso::EwmLassoNode;
+
+            let input_key = to_graph_rec(input.node, ctx)?;
+            let output_schema = &ctx.phys_sm[phys_node_key].output_schema;
+            let output_name = output_schema.get_at_index(0).unwrap().0.clone();
+
+            let node = EwmLassoNode::new("ewm-lasso", output_name, *options);
+
+            ctx.graph.add_node(node, [(input_key, input.port)])
+        },
     };
 
     ctx.phys_to_graph.insert(phys_node_key, graph_key);

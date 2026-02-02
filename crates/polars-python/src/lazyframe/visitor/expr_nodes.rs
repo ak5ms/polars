@@ -1389,6 +1389,9 @@ pub(crate) fn into_py(py: Python<'_>, expr: &AExpr) -> PyResult<Py<PyAny>> {
                 IRFunctionExpr::EwmVar { options: _ } => {
                     return Err(PyNotImplementedError::new_err("ewm var"));
                 },
+                IRFunctionExpr::EwmLasso { options: _ } => {
+                    return Err(PyNotImplementedError::new_err("ewm lasso"));
+                },
                 IRFunctionExpr::Replace => ("replace",).into_py_any(py),
                 IRFunctionExpr::ReplaceStrict { return_dtype: _ } => {
                     // Can ignore the return dtype because it is encoded in the schema.

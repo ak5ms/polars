@@ -7,6 +7,12 @@ use num_traits::Float;
 
 use crate::ewm::EwmStateUpdate;
 
+/// Stateful exponential-weighted covariance accumulator.
+///
+/// This struct is intentionally stateful so it can be reused across streaming
+/// morsels; the streaming engine keeps the state object alive and feeds new
+/// Arrow arrays into `update_iter`, which incrementally updates the running
+/// weights, means, and covariance.
 pub struct EwmCovState<T> {
     weight: T,
     mean_x: T,

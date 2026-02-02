@@ -2138,6 +2138,38 @@ fn lower_exprs_with_ctx(
                 transformed_exprs.push(ctx.expr_arena.add(AExpr::Column(out_name)));
             },
 
+            #[cfg(feature = "ewma")]
+            AExpr::Function {
+                input: input_exprs,
+                function: IRFunctionExpr::EwmLasso { options },
+                options: _,
+            } => {
+                let out_name = unique_column_name();
+                let input = match input_exprs.as_slice() {
+                    [x_expr, y_expr] => build_select_stream_with_ctx(
+                        input,
+                        &[
+                            x_expr.with_alias(format!("{out_name}_x").into()),
+                            y_expr.with_alias(format!("{out_name}_y").into()),
+                        ],
+                        ctx,
+                    )?,
+                    _ => panic!("{:?}", input_exprs),
+                };
+
+                let output_schema = Arc::new(Schema::from_iter([(
+                    out_name.clone(),
+                    DataType::List(Box::new(DataType::Float64)),
+                )]));
+
+                let node_key = ctx.phys_sm.insert(PhysNode::new(
+                    output_schema,
+                    PhysNodeKind::EwmLasso { input, options },
+                ));
+                input_streams.insert(PhysStream::first(node_key));
+                transformed_exprs.push(ctx.expr_arena.add(AExpr::Column(out_name)));
+            },
+
             #[cfg(feature = "dynamic_group_by")]
             rolling_function @ AExpr::Rolling {
                 function,

@@ -354,6 +354,10 @@ pub enum FunctionExpr {
     EwmVar {
         options: EWMOptions,
     },
+    #[cfg(feature = "ewma")]
+    EwmLasso {
+        options: EwmLassoOptions,
+    },
     #[cfg(feature = "replace")]
     Replace,
     #[cfg(feature = "replace")]
@@ -638,6 +642,8 @@ impl Hash for FunctionExpr {
             EwmStd { options } => options.hash(state),
             #[cfg(feature = "ewma")]
             EwmVar { options } => options.hash(state),
+            #[cfg(feature = "ewma")]
+            EwmLasso { options } => options.hash(state),
             #[cfg(feature = "hist")]
             Hist {
                 bin_count,
@@ -861,6 +867,8 @@ impl Display for FunctionExpr {
             EwmStd { .. } => "ewm_std",
             #[cfg(feature = "ewma")]
             EwmVar { .. } => "ewm_var",
+            #[cfg(feature = "ewma")]
+            EwmLasso { .. } => "ewm_lasso",
             #[cfg(feature = "hist")]
             Hist { .. } => "hist",
             #[cfg(feature = "replace")]

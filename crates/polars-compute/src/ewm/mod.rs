@@ -1,10 +1,12 @@
 pub mod cov;
+pub mod lasso;
 pub mod mean;
 pub mod options;
 use arrow::array::Array;
 pub use cov::{EwmCovState, EwmStdState, EwmVarState, ewm_std, ewm_var};
+pub use lasso::{EwmLassoState, ewm_lasso, ewm_lasso_with_state};
 pub use mean::{EwmMeanState, ewm_mean};
-pub use options::EWMOptions;
+pub use options::{EWMOptions, EwmLassoOptions};
 
 pub trait EwmStateUpdate {
     fn ewm_state_update(&mut self, values: &dyn Array) -> Box<dyn Array>;

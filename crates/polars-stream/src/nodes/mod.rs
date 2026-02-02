@@ -6,6 +6,8 @@ pub mod dynamic_group_by;
 pub mod dynamic_slice;
 #[cfg(feature = "ewma")]
 pub mod ewm;
+#[cfg(feature = "ewma")]
+pub mod ewm_lasso;
 pub mod filter;
 pub mod gather_every;
 pub mod group_by;

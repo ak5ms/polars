@@ -14,6 +14,8 @@ mod diff;
 mod eager;
 #[cfg(feature = "ewma")]
 mod ewm;
+#[cfg(feature = "ewma")]
+mod ewm_lasso;
 #[cfg(feature = "ewma_by")]
 mod ewm_by;
 #[cfg(feature = "round_series")]
@@ -84,6 +86,8 @@ pub use diff::*;
 pub use eager::*;
 #[cfg(feature = "ewma")]
 pub use ewm::*;
+#[cfg(feature = "ewma")]
+pub use ewm_lasso::*;
 #[cfg(feature = "ewma_by")]
 pub use ewm_by::*;
 #[cfg(feature = "round_series")]

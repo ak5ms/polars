@@ -1164,6 +1164,8 @@ pub fn ir_function_to_dsl(input: Vec<Expr>, function: IRFunctionExpr) -> Expr {
         IF::EwmStd { options } => F::EwmStd { options },
         #[cfg(feature = "ewma")]
         IF::EwmVar { options } => F::EwmVar { options },
+        #[cfg(feature = "ewma")]
+        IF::EwmLasso { options } => F::EwmLasso { options },
         #[cfg(feature = "replace")]
         IF::Replace => F::Replace,
         #[cfg(feature = "replace")]

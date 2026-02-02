@@ -368,6 +368,10 @@ pub enum IRFunctionExpr {
     EwmVar {
         options: EWMOptions,
     },
+    #[cfg(feature = "ewma")]
+    EwmLasso {
+        options: EwmLassoOptions,
+    },
     #[cfg(feature = "replace")]
     Replace,
     #[cfg(feature = "replace")]
@@ -657,6 +661,8 @@ impl Hash for IRFunctionExpr {
             EwmStd { options } => options.hash(state),
             #[cfg(feature = "ewma")]
             EwmVar { options } => options.hash(state),
+            #[cfg(feature = "ewma")]
+            EwmLasso { options } => options.hash(state),
             #[cfg(feature = "hist")]
             Hist {
                 bin_count,
@@ -885,6 +891,8 @@ impl Display for IRFunctionExpr {
             EwmStd { .. } => "ewm_std",
             #[cfg(feature = "ewma")]
             EwmVar { .. } => "ewm_var",
+            #[cfg(feature = "ewma")]
+            EwmLasso { .. } => "ewm_lasso",
             #[cfg(feature = "hist")]
             Hist { .. } => "hist",
             #[cfg(feature = "replace")]
@@ -1211,7 +1219,10 @@ impl IRFunctionExpr {
                     f
                 }),
             #[cfg(feature = "ewma")]
-            F::EwmMean { .. } | F::EwmStd { .. } | F::EwmVar { .. } => {
+            F::EwmMean { .. }
+            | F::EwmStd { .. }
+            | F::EwmVar { .. }
+            | F::EwmLasso { .. } => {
                 FunctionOptions::length_preserving()
             },
             #[cfg(feature = "ewma_by")]

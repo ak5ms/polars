@@ -9158,6 +9158,32 @@ class Series:
         ]
         """
 
+    def ewm_lasso(
+        self,
+        y: IntoExpr,
+        *,
+        decay: float = 0.9,
+        alpha: float = 1.0,
+        max_iter: int = 1000,
+        tol: float = 1e-8,
+    ) -> Series:
+        """
+        Compute streaming exponentially-weighted LASSO coefficients per row.
+
+        Parameters
+        ----------
+        y
+            Target expression.
+        decay
+            Exponential decay factor applied to historical weights.
+        alpha
+            L1 penalty strength.
+        max_iter
+            Maximum coordinate descent iterations per row.
+        tol
+            Convergence tolerance for coordinate descent updates.
+        """
+
     def extend_constant(self, value: IntoExpr, n: int | IntoExprColumn) -> Series:
         """
         Extremely fast method for extending the Series with 'n' copies of a value.
