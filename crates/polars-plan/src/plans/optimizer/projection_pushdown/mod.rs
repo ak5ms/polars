@@ -658,6 +658,9 @@ impl ProjectionPushDown {
                 expr_arena,
             ),
             join_ir @ Join { .. } => process_join(join_ir, ctx, self, lp_arena, expr_arena),
+            join_many_ir @ JoinMany { .. } => {
+                self.no_pushdown_restart_opt(join_many_ir, ctx, lp_arena, expr_arena)
+            },
             HStack {
                 input,
                 exprs,

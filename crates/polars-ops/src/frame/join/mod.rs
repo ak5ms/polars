@@ -7,6 +7,7 @@ mod general;
 mod hash_join;
 #[cfg(feature = "iejoin")]
 mod iejoin;
+mod join_many;
 pub mod merge_join;
 #[cfg(feature = "merge_sorted")]
 mod merge_sorted;
@@ -31,6 +32,7 @@ use hashbrown::hash_map::{Entry, RawEntryMut};
 pub use iejoin::{IEJoinOptions, InequalityOperator};
 #[cfg(feature = "merge_sorted")]
 pub use merge_sorted::_merge_sorted_dfs;
+pub use join_many::join_many_sorted;
 use polars_core::POOL;
 #[allow(unused_imports)]
 use polars_core::chunked_array::ops::row_encode::{

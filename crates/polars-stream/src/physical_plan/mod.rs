@@ -16,6 +16,7 @@ use polars_plan::dsl::{
 use polars_plan::plans::expr_ir::ExprIR;
 use polars_plan::plans::hive::HivePartitionsDf;
 use polars_plan::plans::{AExpr, DataFrameUdf, IR};
+use polars_plan::prelude::JoinOptionsIR;
 
 mod fmt;
 mod io;
@@ -391,6 +392,12 @@ pub enum PhysNodeKind {
         options: Option<JoinTypeOptionsIR>,
     },
 
+    JoinMany {
+        inputs: Vec<PhysStream>,
+        on: Vec<PlSmallStr>,
+        options: Arc<JoinOptionsIR>,
+    },
+
     #[cfg(feature = "merge_sorted")]
     MergeSorted {
         input_left: PhysStream,
@@ -509,6 +516,12 @@ fn visit_node_inputs_mut(
                 rec!(input_right.node);
                 visit(input_left);
                 visit(input_right);
+            },
+            PhysNodeKind::JoinMany { inputs, .. } => {
+                for input in inputs {
+                    rec!(input.node);
+                    visit(input);
+                }
             },
 
             #[cfg(feature = "merge_sorted")]

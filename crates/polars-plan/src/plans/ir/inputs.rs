@@ -98,6 +98,7 @@ impl IR {
                 )),
                 _ => Exprs::double_slice(left_on, right_on),
             },
+            JoinMany { .. } => Exprs::Empty,
 
             Sink { payload, .. } => match payload {
                 SinkTypeIR::Memory => Exprs::Empty,
@@ -170,6 +171,7 @@ impl IR {
                 )),
                 _ => ExprsMut::double_slice(left_on, right_on),
             },
+            JoinMany { .. } => ExprsMut::Empty,
 
             Sink { payload, .. } => match payload {
                 SinkTypeIR::Memory => ExprsMut::Empty,
@@ -219,6 +221,7 @@ impl IR {
                 input_right,
                 ..
             } => Inputs::double(*input_left, *input_right),
+            JoinMany { inputs, .. } => Inputs::slice(inputs),
             HStack { input, .. } => Inputs::single(*input),
             Distinct { input, .. } => Inputs::single(*input),
             MapFunction { input, .. } => Inputs::single(*input),
@@ -258,6 +261,7 @@ impl IR {
                 input_right,
                 ..
             } => InputsMut::double(input_left, input_right),
+            JoinMany { inputs, .. } => InputsMut::slice(inputs),
             HStack { input, .. } => InputsMut::single(input),
             Distinct { input, .. } => InputsMut::single(input),
             MapFunction { input, .. } => InputsMut::single(input),

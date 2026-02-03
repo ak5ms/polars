@@ -27,6 +27,7 @@ impl DslPlan {
                 scratch.push(input_left);
                 scratch.push(input_right);
             },
+            JoinMany { inputs, .. } => scratch.extend(inputs),
             ExtContext { input, contexts } => {
                 scratch.push(input);
                 scratch.extend(contexts);

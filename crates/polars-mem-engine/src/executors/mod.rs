@@ -8,6 +8,7 @@ pub(super) mod group_by_rolling;
 mod group_by_streaming;
 mod hconcat;
 mod join;
+mod join_many;
 #[cfg(feature = "merge_sorted")]
 mod merge_sorted;
 mod projection;
@@ -40,6 +41,7 @@ pub(super) use self::group_by_rolling::GroupByRollingExec;
 pub(super) use self::group_by_streaming::*;
 pub(super) use self::hconcat::*;
 pub(super) use self::join::*;
+pub(super) use self::join_many::*;
 #[cfg(feature = "merge_sorted")]
 pub(super) use self::merge_sorted::*;
 pub(super) use self::projection::*;

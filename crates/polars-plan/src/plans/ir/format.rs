@@ -223,6 +223,17 @@ impl<'a> IRDisplay<'a> {
                     write!(f, "\n{:indent$}END {how} JOIN", "")
                 }
             },
+            JoinMany { inputs, on, options, .. } => {
+                let how = &options.args.how;
+                write!(f, "{:indent$}{how} JOIN MANY:", "")?;
+                write!(f, "\n{:indent$}ON: {}", "", on.join(", "))?;
+                let sub_sub_indent = sub_indent + INDENT_INCREMENT;
+                for (idx, plan) in inputs.iter().enumerate() {
+                    write!(f, "\n{:sub_indent$}PLAN {idx}:", "")?;
+                    self.with_root(*plan)._format(f, sub_sub_indent)?;
+                }
+                write!(f, "\n{:indent$}END JOIN MANY", "")
+            },
             MapFunction { input, .. } => {
                 write_ir_non_recursive(f, ir_node, self.lp.expr_arena, output_schema, indent)?;
                 self.with_root(*input)._format(f, sub_indent)
@@ -945,6 +956,17 @@ pub fn write_ir_non_recursive(
                 write!(f, "\n{:indent$}RIGHT PLAN ON: {right_on}", "")?;
             }
 
+            Ok(())
+        },
+        IR::JoinMany {
+            inputs: _,
+            schema: _,
+            on,
+            options,
+        } => {
+            let how = &options.args.how;
+            write!(f, "{:indent$}{how} JOIN MANY", "")?;
+            write!(f, "\n{:indent$}ON: {}", "", on.join(", "))?;
             Ok(())
         },
         IR::HStack {

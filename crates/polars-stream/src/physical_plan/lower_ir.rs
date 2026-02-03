@@ -1248,6 +1248,26 @@ pub fn lower_ir(
             }
         },
 
+        IR::JoinMany {
+            inputs,
+            schema: _,
+            on,
+            options,
+        } => {
+            let input_nodes = inputs.clone();
+            let on = on.clone();
+            let options = options.clone();
+            let inputs = input_nodes
+                .iter()
+                .map(|node| lower_ir!(*node))
+                .collect::<PolarsResult<Vec<_>>>()?;
+            PhysNodeKind::JoinMany {
+                inputs,
+                on,
+                options,
+            }
+        },
+
         IR::Distinct { input, options } => {
             let options = options.clone();
             let input = *input;

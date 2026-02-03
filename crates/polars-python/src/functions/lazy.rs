@@ -1,5 +1,7 @@
 use polars::lazy::dsl;
 use polars::prelude::*;
+use polars::series::IsSorted;
+use polars_plan::dsl::function_expr::FunctionExpr;
 use polars_plan::plans::DynLiteralValue;
 use polars_plan::prelude::UnionArgs;
 use polars_utils::python_function::PythonObject;
@@ -230,6 +232,76 @@ pub fn concat_lf(
         },
     )
     .map_err(PyPolarsErr::from)?;
+    Ok(lf.into())
+}
+
+#[pyfunction]
+pub fn join_many(lfs: Vec<PyLazyFrame>, on: Vec<PyExpr>, how: Wrap<JoinType>) -> PyResult<PyLazyFrame> {
+    if lfs.len() < 2 {
+        return Err(PyValueError::new_err(
+            "expected at least 2 LazyFrames for 'join_many'",
+        ));
+    }
+
+    if on.is_empty() {
+        return Err(PyValueError::new_err(
+            "expected at least one join key expression for 'join_many'",
+        ));
+    }
+
+    if !matches!(how.0, JoinType::Full) {
+        return Err(PyValueError::new_err(
+            "join_many currently supports only how='full'",
+        ));
+    }
+
+    let on_exprs = on.to_exprs();
+    let mut on_columns = Vec::with_capacity(on_exprs.len());
+    for expr in &on_exprs {
+        let column = match expr {
+            Expr::Column(_) => {
+                return Err(PyValueError::new_err(
+                    "join_many requires sorted join keys; call `.set_sorted()` on each key expression",
+                ));
+            }
+            Expr::Function {
+                function: FunctionExpr::SetSortedFlag(sorted),
+                input,
+            } => {
+                if !matches!(sorted, IsSorted::Ascending) {
+                    return Err(PyValueError::new_err(
+                        "join_many requires ascending sorted keys; call `.set_sorted(descending=False)`",
+                    ));
+                }
+                if let Some(Expr::Column(name)) = input.first() {
+                    name.clone()
+                } else {
+                    return Err(PyValueError::new_err(
+                        "join_many join keys must be column expressions",
+                    ));
+                }
+            }
+            _ => {
+                return Err(PyValueError::new_err(
+                    "join_many join keys must be column expressions",
+                ))
+            }
+        };
+        on_columns.push(column);
+    }
+
+    let frames = lfs
+        .into_iter()
+        .map(|lf| lf.ldf.into_inner())
+        .collect::<Vec<_>>();
+
+    let options = JoinOptions {
+        allow_parallel: true,
+        force_parallel: false,
+        args: JoinArgs::new(JoinType::Full),
+    };
+
+    let lf = dsl::join_many(frames, on_columns, options).map_err(PyPolarsErr::from)?;
     Ok(lf.into())
 }
 

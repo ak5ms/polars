@@ -623,6 +623,15 @@ pub fn to_alp_impl(lp: DslPlan, ctxt: &mut DslConversionContext) -> PolarsResult
             .map_err(|e| e.context(failed_here!(join)))
             .map(|t| t.0);
         },
+        DslPlan::JoinMany { inputs, on, options } => {
+            return join::resolve_join_many(
+                inputs,
+                on,
+                JoinOptionsIR::from(Arc::unwrap_or_clone(options)),
+                ctxt,
+            )
+            .map_err(|e| e.context(failed_here!(join_many)));
+        },
         DslPlan::HStack {
             input,
             exprs,

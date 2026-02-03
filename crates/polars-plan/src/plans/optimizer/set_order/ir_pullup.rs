@@ -136,6 +136,9 @@ pub(super) fn pullup_orders(
                     set_unordered_output!();
                 }
             },
+            IR::JoinMany { .. } => {
+                set_unordered_output!();
+            },
             IR::Distinct { input: _, options } => {
                 if !inputs_ordered[0] {
                     options.maintain_order = false;
