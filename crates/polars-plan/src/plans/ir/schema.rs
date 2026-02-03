@@ -29,6 +29,7 @@ impl IR {
             Cache { .. } => "cache",
             GroupBy { .. } => "aggregate",
             Join { .. } => "join",
+            JoinMany { .. } => "join_many",
             HStack { .. } => "hstack",
             Distinct { .. } => "distinct",
             MapFunction { .. } => "map_function",
@@ -90,6 +91,7 @@ impl IR {
             SimpleProjection { columns, .. } => columns,
             GroupBy { schema, .. } => schema,
             Join { schema, .. } => schema,
+            JoinMany { schema, .. } => schema,
             HStack { schema, .. } => schema,
             Distinct { input, .. }
             | Sink {
@@ -160,6 +162,7 @@ impl IR {
             Select { schema, .. }
             | GroupBy { schema, .. }
             | Join { schema, .. }
+            | JoinMany { schema, .. }
             | HStack { schema, .. }
             | ExtContext { schema, .. }
             | SimpleProjection {

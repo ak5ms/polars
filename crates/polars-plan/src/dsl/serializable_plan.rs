@@ -74,6 +74,11 @@ pub(crate) enum SerializableDslPlanNode {
         predicates: Vec<Expr>,
         options: Arc<JoinOptions>,
     },
+    JoinMany {
+        inputs: Vec<DslPlanKey>,
+        on: Vec<PlSmallStr>,
+        options: Arc<JoinOptions>,
+    },
     HStack {
         input: DslPlanKey,
         exprs: Vec<Expr>,
@@ -245,6 +250,14 @@ fn convert_dsl_plan_to_serializable_plan(
             left_on: left_on.clone(),
             right_on: right_on.clone(),
             predicates: predicates.clone(),
+            options: options.clone(),
+        },
+        DP::JoinMany { inputs, on, options } => SP::JoinMany {
+            inputs: inputs
+                .iter()
+                .map(|plan| dsl_plan_key_from_ref(plan, arenas))
+                .collect(),
+            on: on.clone(),
             options: options.clone(),
         },
         DP::HStack {
@@ -488,6 +501,14 @@ fn try_convert_serializable_plan_to_dsl_plan(
             left_on: left_on.clone(),
             right_on: right_on.clone(),
             predicates: predicates.clone(),
+            options: options.clone(),
+        }),
+        SP::JoinMany { inputs, on, options } => Ok(DP::JoinMany {
+            inputs: inputs
+                .iter()
+                .map(|key| get_dsl_plan(*key, ser_dsl_plan, arenas).map(Arc::unwrap_or_clone))
+                .collect::<PolarsResult<Vec<_>>>()?,
+            on: on.clone(),
             options: options.clone(),
         }),
         SP::HStack {

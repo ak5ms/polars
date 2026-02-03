@@ -276,6 +276,23 @@ impl<'a> IRDotDisplay<'a> {
                     Ok(())
                 })?;
             },
+            JoinMany {
+                inputs,
+                on,
+                options,
+                ..
+            } => {
+                for input in inputs {
+                    recurse!(*input);
+                }
+                write_label(f, id, |f| {
+                    write!(f, "JOIN MANY {}", options.args.how)?;
+                    if !on.is_empty() {
+                        write!(f, "\non: {}", on.join(", "))?;
+                    }
+                    Ok(())
+                })?;
+            },
             MapFunction {
                 input, function, ..
             } => {

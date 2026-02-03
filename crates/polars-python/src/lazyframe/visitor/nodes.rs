@@ -265,6 +265,16 @@ pub struct Join {
     #[pyo3(get)]
     options: Py<PyAny>,
 }
+#[pyclass(frozen)]
+/// Join multiple inputs on the same key columns.
+pub struct JoinMany {
+    #[pyo3(get)]
+    inputs: Vec<usize>,
+    #[pyo3(get)]
+    on: Vec<String>,
+    #[pyo3(get)]
+    options: Py<PyAny>,
+}
 
 #[pyclass(frozen)]
 /// Merge sorted operation
@@ -565,6 +575,29 @@ pub(crate) fn into_py(py: Python<'_>, plan: &IR) -> PyResult<Py<PyAny>> {
                         },
                         _ => name.into_any().unbind(),
                     },
+                    options.args.nulls_equal,
+                    options.args.slice,
+                    options.args.suffix().as_str(),
+                    options.args.coalesce.coalesce(how),
+                    Into::<&str>::into(options.args.maintain_order),
+                )
+                    .into_py_any(py)?
+            },
+        }
+        .into_py_any(py),
+        IR::JoinMany {
+            inputs,
+            on,
+            options,
+            ..
+        } => JoinMany {
+            inputs: inputs.iter().map(|node| node.0).collect(),
+            on: on.iter().map(|name| name.to_string()).collect(),
+            options: {
+                let how = &options.args.how;
+                let name = Into::<&str>::into(how).into_pyobject(py)?;
+                (
+                    name.into_any().unbind(),
                     options.args.nulls_equal,
                     options.args.slice,
                     options.args.suffix().as_str(),
