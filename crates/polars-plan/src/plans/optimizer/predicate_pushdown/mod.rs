@@ -463,6 +463,7 @@ impl PredicatePushDown {
                 acc_predicates,
                 self.new_streaming,
             ),
+            JoinMany { .. } => self.no_pushdown_restart_opt(lp, acc_predicates, lp_arena, expr_arena),
             MapFunction { ref function, .. } => {
                 if function.allow_predicate_pd() {
                     match function {

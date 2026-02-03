@@ -204,6 +204,7 @@ pub(super) fn pushdown_orders(
 
                 [left_input, right_input].into()
             },
+            IR::JoinMany { inputs, .. } => vec![false; inputs.len()].into(),
             IR::Distinct { input: _, options } => {
                 options.maintain_order &= !all_outputs_unordered;
 

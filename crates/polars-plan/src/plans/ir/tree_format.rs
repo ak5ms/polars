@@ -317,6 +317,31 @@ impl<'a> TreeFmtNode<'a> {
                             .chain([self.lp_node(Some("RIGHT PLAN:".to_string()), *input_right)])
                             .collect(),
                     ),
+                    JoinMany {
+                        inputs,
+                        on,
+                        options,
+                        ..
+                    } => {
+                        let on_display = if on.is_empty() {
+                            String::new()
+                        } else {
+                            format!(" ON {}", on.join(", "))
+                        };
+                        ND(
+                            wh(h, &format!("{} JOIN MANY{on_display}", options.args.how)),
+                            inputs
+                                .iter()
+                                .enumerate()
+                                .map(|(idx, input)| {
+                                    self.lp_node(
+                                        Some(format!("PLAN {idx}:")),
+                                        *input,
+                                    )
+                                })
+                                .collect(),
+                        )
+                    },
                     HStack { input, exprs, .. } => ND(
                         wh(h, "WITH_COLUMNS"),
                         exprs

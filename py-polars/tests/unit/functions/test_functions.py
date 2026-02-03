@@ -123,6 +123,64 @@ def test_concat_diagonal(
         assert_frame_equal(out, expected)
 
 
+def test_join_many_inner_streaming() -> None:
+    lf1 = pl.LazyFrame({"k": [1, 2, 3], "a": [10, 20, 30]})
+    lf2 = pl.LazyFrame({"k": [1, 2, 3], "b": [100, 200, 300]})
+    lf3 = pl.LazyFrame({"k": [2, 3, 4], "c": [2000, 3000, 4000]})
+
+    result = pl.join_many([lf1, lf2, lf3], on=pl.col("k").set_sorted()).collect(
+        engine="streaming"
+    )
+    expected = pl.DataFrame(
+        {
+            "k": [1, 2, 3, 4],
+            "a": [10, 20, 30, None],
+            "b": [100, 200, 300, None],
+            "c": [None, 2000, 3000, 4000],
+        }
+    )
+    assert_frame_equal(result, expected)
+
+
+def test_join_many_requires_sorted_keys() -> None:
+    lf1 = pl.LazyFrame({"k": [1, 2], "a": [10, 20]})
+    lf2 = pl.LazyFrame({"k": [1, 2], "b": [100, 200]})
+
+    with pytest.raises(
+        ValueError,
+        match="join_many requires sorted join keys",
+    ):
+        pl.join_many([lf1, lf2], on="k").collect()
+
+
+def test_join_many_requires_ascending_sorted_keys() -> None:
+    lf1 = pl.LazyFrame({"k": [1, 2], "a": [10, 20]})
+    lf2 = pl.LazyFrame({"k": [1, 2], "b": [100, 200]})
+
+    with pytest.raises(
+        ValueError,
+        match="join_many requires ascending sorted keys",
+    ):
+        pl.join_many(
+            [lf1, lf2],
+            on=pl.col("k").set_sorted(descending=True),
+        ).collect()
+
+
+def test_join_many_rejects_duplicate_keys() -> None:
+    lf1 = pl.LazyFrame({"k": [1, 2], "a": [10, 20]})
+    lf2 = pl.LazyFrame({"k": [1, 2], "b": [100, 200]})
+
+    with pytest.raises(
+        DuplicateError,
+        match="join_many received duplicate key",
+    ):
+        pl.join_many(
+            [lf1, lf2],
+            on=[pl.col("k").set_sorted(), pl.col("k").set_sorted()],
+        ).collect()
+
+
 def test_concat_diagonal_relaxed_with_empty_frame() -> None:
     df1 = pl.DataFrame()
     df2 = pl.DataFrame(

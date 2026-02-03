@@ -22,7 +22,7 @@ from polars._utils.parse import (
 )
 from polars._utils.unstable import issue_unstable_warning, unstable
 from polars._utils.various import extend_bool, qualified_type_name
-from polars._utils.wrap import wrap_df, wrap_expr, wrap_s
+from polars._utils.wrap import wrap_df, wrap_expr, wrap_ldf, wrap_s
 from polars.datatypes import DTYPE_TEMPORAL_UNITS, Date, Datetime, Int64
 from polars.datatypes._parse import parse_into_datatype_expr
 from polars.lazyframe.opt_flags import (
@@ -45,6 +45,7 @@ if TYPE_CHECKING:
         EngineType,
         EpochTimeUnit,
         IntoExpr,
+        JoinStrategy,
         PolarsDataType,
         QuantileMethod,
     )
@@ -84,6 +85,37 @@ def field(name: str | list[str]) -> Expr:
     if isinstance(name, str):
         name = [name]
     return wrap_expr(plr.field(name))
+
+
+def join_many(
+    lfs: Sequence[LazyFrame],
+    on: IntoExpr | Sequence[IntoExpr],
+    how: JoinStrategy = "full",
+) -> LazyFrame:
+    """
+    Join multiple lazyframes on the same key(s).
+
+    Parameters
+    ----------
+    lfs
+        LazyFrames to join.
+    on
+        Join key column expression(s) that must be marked as sorted (eg:
+        ``pl.col("k").set_sorted()``).
+    how : {'full'}
+        Join strategy. Only full outer joins are currently supported.
+    """
+    if plr is None:
+        msg = "`join_many` requires the Rust polars library"
+        raise ModuleNotFoundError(msg)
+
+    return wrap_ldf(
+        plr.join_many(
+            [lf._ldf for lf in lfs],
+            parse_into_list_of_expressions(on),
+            how,
+        )
+    )
 
 
 def element() -> Expr:

@@ -3,6 +3,8 @@
 //! Function on multiple expressions.
 //!
 
+use std::sync::Arc;
+
 use polars_core::prelude::*;
 pub use polars_plan::dsl::functions::*;
 use polars_plan::prelude::UnionArgs;
@@ -74,6 +76,35 @@ pub fn concat_lf_horizontal<L: AsRef<[LazyFrame]>>(
 /// Concat multiple [`LazyFrame`]s vertically.
 pub fn concat<L: AsRef<[LazyFrame]>>(inputs: L, args: UnionArgs) -> PolarsResult<LazyFrame> {
     concat_impl(inputs, args)
+}
+
+pub fn join_many(
+    inputs: Vec<LazyFrame>,
+    on: Vec<PlSmallStr>,
+    options: JoinOptions,
+) -> PolarsResult<LazyFrame> {
+    let mut inputs = inputs;
+    let lf = std::mem::take(
+        inputs
+            .get_mut(0)
+            .ok_or_else(|| polars_err!(NoData: "empty container given"))?,
+    );
+
+    let opt_state = lf.opt_state;
+    let cached_arenas = lf.cached_arena.clone();
+
+    let mut lps = Vec::with_capacity(inputs.len());
+    lps.push(lf.logical_plan);
+    for lf in &mut inputs[1..] {
+        lps.push(std::mem::take(&mut lf.logical_plan));
+    }
+
+    let lp = DslPlan::JoinMany {
+        inputs: lps,
+        on,
+        options: Arc::new(options),
+    };
+    Ok(LazyFrame::from_inner(lp, opt_state, cached_arenas))
 }
 
 #[cfg(test)]

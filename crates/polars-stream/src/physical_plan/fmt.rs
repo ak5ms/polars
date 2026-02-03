@@ -646,6 +646,21 @@ fn visualize_plan_rec(
             }
             (label, &[*input_left, *input_right][..])
         },
+        PhysNodeKind::JoinMany { inputs, on, options } => {
+            let mut label = "join-many".to_string();
+            let how: &'static str = (&options.args.how).into();
+            write!(
+                label,
+                r"\non:\n{}",
+                on.iter()
+                    .map(|name| escape_graphviz(&name[..]))
+                    .collect::<Vec<_>>()
+                    .join("\n"),
+            )
+            .unwrap();
+            write!(label, r"\nhow: {}", escape_graphviz(how)).unwrap();
+            (label, &inputs[..])
+        },
         PhysNodeKind::InMemoryJoin {
             input_left,
             input_right,

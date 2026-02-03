@@ -317,6 +317,7 @@ fn is_sorted_rec(
 
         IR::GroupBy { .. } => None,
         IR::Join { .. } => None,
+        IR::JoinMany { .. } => None,
         IR::MapFunction { input, function } => match function {
             FunctionIR::Hint(hint) => match hint {
                 HintIR::Sorted(v) => Some(IRSorted(v.clone())),

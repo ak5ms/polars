@@ -2,6 +2,7 @@ use arrow::legacy::error::PolarsResult;
 use either::Either;
 use polars_core::chunked_array::cast::CastOptions;
 use polars_core::error::feature_gated;
+use polars_core::prelude::PlHashSet;
 use polars_core::utils::{get_numeric_upcast_supertype_lossless, try_get_supertype};
 use polars_utils::format_pl_smallstr;
 use polars_utils::itertools::Itertools;
@@ -438,6 +439,88 @@ pub fn resolve_join(
     } else {
         Ok((join_node, join_node))
     }
+}
+
+pub fn resolve_join_many(
+    inputs: Vec<DslPlan>,
+    on: Vec<PlSmallStr>,
+    options: JoinOptionsIR,
+    ctxt: &mut DslConversionContext,
+) -> PolarsResult<Node> {
+    polars_ensure!(
+        inputs.len() >= 2,
+        InvalidOperation: "join_many expects at least two inputs"
+    );
+    polars_ensure!(
+        !on.is_empty(),
+        InvalidOperation: "join_many expects at least one join key"
+    );
+    polars_ensure!(
+        matches!(options.args.how, JoinType::Full),
+        InvalidOperation: "join_many currently supports only full joins"
+    );
+    let mut seen_keys = PlHashSet::with_capacity(on.len());
+    for key in &on {
+        polars_ensure!(
+            seen_keys.insert(key.clone()),
+            Duplicate: "join_many received duplicate key '{key}'"
+        );
+    }
+
+    let mut ir_inputs = Vec::with_capacity(inputs.len());
+    let mut schemas = Vec::with_capacity(inputs.len());
+    for plan in inputs {
+        let ir = to_alp_impl(plan, ctxt)?;
+        schemas.push(ctxt.lp_arena.get(ir).schema(ctxt.lp_arena).into_owned());
+        ir_inputs.push(ir);
+    }
+
+    let base_schema = &schemas[0];
+    for (idx, schema) in schemas.iter().enumerate() {
+        for key in &on {
+            polars_ensure!(
+                schema.contains(key),
+                ColumnNotFound: "join_many key '{key}' is missing from input {idx}"
+            );
+            polars_ensure!(
+                schema.get(key) == base_schema.get(key),
+                SchemaMismatch: "join_many key '{key}' has mismatched types across inputs"
+            );
+        }
+    }
+
+    let mut seen = PlHashSet::new();
+    for key in &on {
+        seen.insert(key.clone());
+    }
+
+    let mut output_schema = Schema::with_capacity(
+        on.len() + schemas.iter().map(|schema| schema.len()).sum::<usize>(),
+    );
+    for key in &on {
+        let dtype = base_schema.get(key).unwrap().clone();
+        output_schema.with_column(key.clone(), dtype);
+    }
+    for (idx, schema) in schemas.iter().enumerate() {
+        for (name, dtype) in schema.iter() {
+            if on.contains(name) {
+                continue;
+            }
+            polars_ensure!(
+                seen.insert(name.clone()),
+                Duplicate: "join_many received duplicate column name '{name}' in input {idx}"
+            );
+            output_schema.with_column(name.clone(), dtype.clone());
+        }
+    }
+
+    let ir = IR::JoinMany {
+        inputs: ir_inputs,
+        schema: Arc::new(output_schema),
+        on,
+        options: Arc::new(options),
+    };
+    Ok(ctxt.lp_arena.add(ir))
 }
 
 #[cfg(feature = "iejoin")]

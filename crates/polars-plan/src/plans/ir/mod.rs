@@ -114,6 +114,12 @@ pub enum IR {
         right_on: Vec<ExprIR>,
         options: Arc<JoinOptionsIR>,
     },
+    JoinMany {
+        inputs: Vec<Node>,
+        schema: SchemaRef,
+        on: Vec<PlSmallStr>,
+        options: Arc<JoinOptionsIR>,
+    },
     HStack {
         input: Node,
         exprs: Vec<ExprIR>,

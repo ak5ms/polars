@@ -1003,6 +1003,21 @@ fn to_graph_rec<'a>(
             )
         },
 
+        JoinMany { inputs, on, options: _ } => {
+            let mut input_keys = Vec::with_capacity(inputs.len());
+            let mut input_schemas = Vec::with_capacity(inputs.len());
+            for input in inputs {
+                let key = to_graph_rec(input.node, ctx)?;
+                input_keys.push((key, input.port));
+                input_schemas.push(ctx.phys_sm[input.node].output_schema.clone());
+            }
+
+            ctx.graph.add_node(
+                nodes::joins::join_many::JoinManyNode::new(input_schemas, on.clone()),
+                input_keys,
+            )
+        },
+
         EquiJoin {
             input_left,
             input_right,

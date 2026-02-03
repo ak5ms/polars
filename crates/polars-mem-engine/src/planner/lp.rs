@@ -3,6 +3,7 @@ use polars_core::prelude::*;
 use polars_expr::state::ExecutionState;
 use polars_plan::plans::expr_ir::ExprIR;
 use polars_plan::prelude::sink::CallbackSinkType;
+use polars_ops::prelude::JoinType;
 use polars_utils::unique_id::UniqueId;
 use recursive::recursive;
 
@@ -656,6 +657,20 @@ fn create_physical_plan_impl(
                 options.args,
                 join_type_options,
             )))
+        },
+        JoinMany { inputs, on, options, .. } => {
+            let options = Arc::try_unwrap(options).unwrap_or_else(|options| (*options).clone());
+            polars_ensure!(
+                matches!(options.args.how, JoinType::Full),
+                InvalidOperation: "join_many currently supports only full joins"
+            );
+            let inputs = state.with_new_branch(|new_state| {
+                inputs
+                    .into_iter()
+                    .map(|node| recurse!(node, new_state))
+                    .collect::<PolarsResult<Vec<_>>>()
+            })?;
+            Ok(Box::new(executors::JoinManyExec::new(inputs, on)))
         },
         HStack {
             input,

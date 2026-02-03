@@ -203,6 +203,15 @@ impl Hash for IRHashWrap<'_> {
                 hash_exprs(right_on, self.expr_arena, state);
                 options.hash(state);
             },
+            IR::JoinMany {
+                inputs: _,
+                schema: _,
+                on,
+                options,
+            } => {
+                on.hash(state);
+                options.hash(state);
+            },
             IR::HStack {
                 input: _,
                 exprs,
